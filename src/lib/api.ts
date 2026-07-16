@@ -115,6 +115,7 @@ export const queryString = (
 export type Id = string | number;
 export type Platform = "android" | "ios" | "pc";
 export type PaymentChannel = "wechat" | "alipay" | "apple";
+export type AuthSession = { token: string; expires_at: string };
 
 export interface Tag {
   id: string;
@@ -250,6 +251,12 @@ export interface Payment {
   amount?: string;
   paid_at?: string | null;
 }
+export interface PaymentCallbackInput {
+  payment_no: string;
+  trade_no: string;
+  status: "paid" | "failed";
+  paid_at?: string;
+}
 export interface Refund {
   id?: string;
   refund_no: string;
@@ -257,6 +264,10 @@ export interface Refund {
   amount?: string;
   reason?: string | null;
   status?: string;
+}
+export interface RefundCallbackInput {
+  refund_no: string;
+  status: "processed" | "failed";
 }
 export interface ScanProduct {
   id: string;
@@ -302,16 +313,23 @@ type OrderQuery = PageParams & {
 type IdempotentInit = {
   idempotencyKey?: string;
 };
+type SignedCallbackInit = {
+  signature: string;
+};
 
 function idempotencyHeaders(idempotencyKey?: string): HeadersInit | undefined {
   return idempotencyKey ? { "Idempotency-Key": idempotencyKey } : undefined;
+}
+
+function signatureHeaders(signature: string): HeadersInit {
+  return { "x-signature": signature };
 }
 
 export const api = {
   health: () => apiRequest<unknown>("/health"),
   auth: {
     phoneLogin: (body: { phone: string; code: string; device?: string; platform?: Platform }) =>
-      apiRequest<{ session: { token: string; expires_at: string } }>("/auth/phone/login", {
+      apiRequest<{ session: AuthSession }>("/auth/phone/login", {
         method: "POST",
         ...jsonBody(body),
       }),
@@ -323,12 +341,51 @@ export const api = {
       device?: string;
       platform?: Platform;
     }) =>
-      apiRequest<{ session: { token: string; expires_at: string } }>("/auth/oauth/login", {
+      apiRequest<{ session: AuthSession }>("/auth/oauth/login", {
+        method: "POST",
+        ...jsonBody(body),
+      }),
+    register: (body: {
+      phone: string;
+      code: string;
+      password: string;
+      account?: string;
+      nickname?: string;
+      device?: string;
+      platform?: Platform;
+    }) =>
+      apiRequest<{ session: AuthSession }>("/auth/register", {
+        method: "POST",
+        ...jsonBody(body),
+      }),
+    passwordLogin: (body: {
+      account: string;
+      password: string;
+      device?: string;
+      platform?: Platform;
+    }) =>
+      apiRequest<{ session: AuthSession }>("/auth/password/login", {
+        method: "POST",
+        ...jsonBody(body),
+      }),
+    setPassword: (password: string) =>
+      apiRequest<void>("/auth/password/set", {
+        method: "POST",
+        ...jsonBody({ password }),
+      }),
+    wechatLogin: (body: {
+      code: string;
+      phone?: string;
+      phone_code?: string;
+      device?: string;
+      platform?: Platform;
+    }) =>
+      apiRequest<{ session: AuthSession }>("/auth/wechat/login", {
         method: "POST",
         ...jsonBody(body),
       }),
     refresh: (token: string) =>
-      apiRequest<{ session: { token: string; expires_at: string } }>("/auth/refresh", {
+      apiRequest<{ session: AuthSession }>("/auth/refresh", {
         method: "POST",
         ...jsonBody({ token }),
       }),
@@ -410,6 +467,16 @@ export const api = {
         ...jsonBody({ channel }),
       }),
     detail: (paymentNo: string) => apiRequest<Payment>(`/payments/${paymentNo}`),
+    callback: (
+      channel: PaymentChannel,
+      body: PaymentCallbackInput,
+      init: SignedCallbackInit,
+    ) =>
+      apiRequest<unknown>(`/payments/callback/${channel}`, {
+        method: "POST",
+        headers: signatureHeaders(init.signature),
+        ...jsonBody(body),
+      }),
     requestRefund: (
       orderNo: string,
       body: { amount: string; reason?: string },
@@ -421,6 +488,16 @@ export const api = {
         ...jsonBody(body),
       }),
     refunds: (orderNo: string) => apiRequest<Refund[]>(`/orders/${orderNo}/refunds`),
+    refundCallback: (
+      channel: PaymentChannel,
+      body: RefundCallbackInput,
+      init: SignedCallbackInit,
+    ) =>
+      apiRequest<unknown>(`/refunds/callback/${channel}`, {
+        method: "POST",
+        headers: signatureHeaders(init.signature),
+        ...jsonBody(body),
+      }),
   },
   coupons: {
     available: () => apiRequest<Coupon[]>("/coupons/available"),
