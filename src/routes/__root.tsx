@@ -13,6 +13,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { RouteSkeleton } from "../components/page-skeleton";
 import { AppNoticeViewport } from "../components/app-notice";
+import { AppUpdateGate } from "../components/app-update";
 
 function NotFoundComponent() {
   return (
@@ -145,6 +146,7 @@ function RootComponent() {
         <Outlet />
       </Suspense>
       <AppNoticeViewport />
+      <AppUpdateGate />
     </QueryClientProvider>
   );
 }

@@ -16,7 +16,12 @@ function Login() {
     event.preventDefault();
     setLoading(true);
     try {
-      const result = await api.auth.passwordLogin({ account: phone, password, platform: "pc" });
+      const result = await api.auth.passwordLogin({
+        account: phone,
+        password,
+        platform: "pc",
+        login_scope: "app",
+      });
       setSession(result.session);
       await nav({ to: "/home" });
     } catch (reason) {

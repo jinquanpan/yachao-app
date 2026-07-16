@@ -114,6 +114,7 @@ export const queryString = (
 
 export type Id = string | number;
 export type Platform = "android" | "ios" | "pc";
+export type LoginScope = "app" | "admin" | "cashier";
 export type PaymentChannel = "wechat" | "alipay" | "apple";
 export type AuthSession = { token: string; expires_at: string };
 
@@ -280,10 +281,24 @@ export interface ScanProduct {
   created_at?: string;
 }
 export interface AppVersion {
+  id?: string;
+  platform?: Platform;
   version: string;
-  url?: string;
-  changelog?: string;
+  download_url: string;
+  release_notes?: string | null;
   force_update?: boolean;
+  created_at?: string;
+}
+export interface PublishAppVersionInput {
+  platform: Platform;
+  version: string;
+  download_url: string;
+  force_update?: boolean;
+  release_notes?: string | null;
+}
+export interface MeAccess {
+  role: string;
+  login_scopes: LoginScope[];
 }
 export interface Me {
   id: string;
@@ -328,7 +343,13 @@ function signatureHeaders(signature: string): HeadersInit {
 export const api = {
   health: () => apiRequest<unknown>("/health"),
   auth: {
-    phoneLogin: (body: { phone: string; code: string; device?: string; platform?: Platform }) =>
+    phoneLogin: (body: {
+      phone: string;
+      code: string;
+      device?: string;
+      platform?: Platform;
+      login_scope?: LoginScope;
+    }) =>
       apiRequest<{ session: AuthSession }>("/auth/phone/login", {
         method: "POST",
         ...jsonBody(body),
@@ -340,6 +361,7 @@ export const api = {
       phone?: string;
       device?: string;
       platform?: Platform;
+      login_scope?: LoginScope;
     }) =>
       apiRequest<{ session: AuthSession }>("/auth/oauth/login", {
         method: "POST",
@@ -363,6 +385,7 @@ export const api = {
       password: string;
       device?: string;
       platform?: Platform;
+      login_scope?: LoginScope;
     }) =>
       apiRequest<{ session: AuthSession }>("/auth/password/login", {
         method: "POST",
@@ -379,6 +402,7 @@ export const api = {
       phone_code?: string;
       device?: string;
       platform?: Platform;
+      login_scope?: LoginScope;
     }) =>
       apiRequest<{ session: AuthSession }>("/auth/wechat/login", {
         method: "POST",
@@ -397,6 +421,7 @@ export const api = {
       apiRequest<Me>("/me", { method: "PATCH", ...jsonBody(body) }),
     coupons: (status?: "unused" | "used" | "expired") =>
       apiRequest<Coupon[]>(`/me/coupons${queryString({ status })}`),
+    access: () => apiRequest<MeAccess>("/me/access"),
   },
   catalog: {
     home: () =>
@@ -524,6 +549,8 @@ export const api = {
   app: {
     latestVersion: (platform: Platform) =>
       apiRequest<AppVersion>(`/app/versions/latest${queryString({ platform })}`),
+    publishVersion: (body: PublishAppVersionInput) =>
+      apiRequest<AppVersion>("/app/versions/publish", { method: "POST", ...jsonBody(body) }),
   },
   admin: {
     adjustStock: (

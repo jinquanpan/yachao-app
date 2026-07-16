@@ -2,8 +2,9 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
 import { Bell, ChevronRight, Database, Info, LogOut, ShieldCheck } from "lucide-react";
 import { PhoneShell, TopBar } from "@/components/phone-shell";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest, clearSession } from "@/lib/api";
+import { APP_VERSION } from "@/lib/app-info";
 import { clearUniCache, formatBytes, getUniCacheSize } from "@/utils/uniapp";
 import { notify } from "@/lib/notify";
 
@@ -15,11 +16,6 @@ function SettingsPage() {
   const [confirmExit, setConfirmExit] = useState(false);
   const nav = useNavigate();
   const client = useQueryClient();
-  const version = useQuery({
-    queryKey: ["version", "pc"],
-    queryFn: () => apiRequest<{ version: string }>("/app/versions/latest?platform=pc"),
-    retry: false,
-  });
   useEffect(() => {
     getUniCacheSize()
       .then((size) => setCacheSize(formatBytes(size)))
@@ -90,13 +86,9 @@ function SettingsPage() {
             icon={Info}
             label="当前版本"
             right={
-              version.isLoading ? (
-                <span className="skeleton-bone h-6 w-14 rounded-full" />
-              ) : (
-                <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[9px] font-bold text-[#075cff]">
-                  v{version.data?.version || "1.0.0"}
-                </span>
-              )
+              <span className="rounded-full bg-blue-50 px-2.5 py-1 text-[9px] font-bold text-[#075cff]">
+                v{APP_VERSION}
+              </span>
             }
             last
           />

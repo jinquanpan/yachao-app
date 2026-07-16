@@ -10,6 +10,10 @@ export default defineConfig({
   vite: {
     // H5+ packages load assets from a local relative path rather than a web-server root.
     base: "./",
+    server: {
+      port: 30067,
+      strictPort: true,
+    },
     build: {
       // Android 11 devices can ship an older System WebView that does not understand
       // modern CSS range media queries such as `(width <= 600px)`.
