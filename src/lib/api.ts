@@ -368,10 +368,10 @@ export const api = {
         method: "POST",
         ...jsonBody(body),
       }),
-    setPassword: (password: string) =>
+    setPassword: (body: { phone: string; code: string; password: string }) =>
       apiRequest<void>("/auth/password/set", {
         method: "POST",
-        ...jsonBody({ password }),
+        ...jsonBody(body),
       }),
     wechatLogin: (body: {
       code: string;

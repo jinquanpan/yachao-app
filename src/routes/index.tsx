@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
+import { CircleAlert, X } from "lucide-react";
 import { Brand, PhoneShell } from "@/components/phone-shell";
 import mascot from "@/assets/mascot-dragon.jpg";
 import { apiRequest, errorMessage, jsonBody, setSession } from "@/lib/api";
@@ -12,6 +13,13 @@ function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
+
+  useEffect(() => {
+    if (!error) return;
+
+    const timeout = window.setTimeout(() => setError(""), 2600);
+    return () => window.clearTimeout(timeout);
+  }, [error]);
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setLoading(true);
@@ -32,6 +40,26 @@ function Login() {
   return (
     <PhoneShell showNav={false} dark noPad>
       <div className="relative flex h-full min-h-[600px] flex-col px-4 pb-6 pt-2">
+        {error && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="absolute left-1/2 top-14 z-50 flex w-[calc(100%-32px)] -translate-x-1/2 items-center gap-2 rounded-[14px] border border-cyan-300/30 bg-[#06183f]/95 px-3 py-2.5 text-[10px] text-white shadow-[0_12px_30px_rgba(0,0,0,0.32)] backdrop-blur-md rise"
+          >
+            <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-cyan-300/15 text-cyan-200">
+              <CircleAlert size={14} />
+            </span>
+            <p className="m-0 flex-1 leading-4">{error}</p>
+            <button
+              type="button"
+              onClick={() => setError("")}
+              aria-label="关闭提示"
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-full border-0 bg-white/10 p-0 text-white/70 transition-colors hover:bg-white/20 hover:text-white"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        )}
         <div className="flex items-center justify-between">
           <Brand compact light />
           <div className="rounded-full bg-white/10 p-1 text-[9px]">
@@ -90,7 +118,6 @@ function Login() {
           <button disabled={loading} className="login-primary w-full disabled:opacity-60">
             {loading ? "正在登录…" : "手机号登录"}
           </button>
-          {error && <p className="m-0 text-center text-[9px] text-red-300">{error}</p>}
         </form>
         <p className="mb-0 mt-3 text-center text-[8px] text-white/35">
           登录即代表同意《用户协议》和《隐私政策》
