@@ -2,24 +2,21 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, type FormEvent } from "react";
 import { Brand, PhoneShell } from "@/components/phone-shell";
 import mascot from "@/assets/mascot-dragon.jpg";
-import { apiRequest, jsonBody, setSession } from "@/lib/api";
+import { api, setSession } from "@/lib/api";
 import { notify } from "@/lib/notify";
 
 export const Route = createFileRoute("/")({ component: Login });
 
 function Login() {
   const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const nav = useNavigate();
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setLoading(true);
     try {
-      const result = await apiRequest<{ session: { token: string; expires_at: string } }>(
-        "/auth/phone/login",
-        { method: "POST", ...jsonBody({ phone, code, platform: "pc" }) },
-      );
+      const result = await api.auth.passwordLogin({ account: phone, password, platform: "pc" });
       setSession(result.session);
       await nav({ to: "/home" });
     } catch (reason) {
@@ -80,14 +77,16 @@ function Login() {
             className="h-11 w-full rounded-[13px] border border-white/20 bg-white/10 px-4 text-[11px] text-white outline-none placeholder:text-white/40"
           />
           <input
-            value={code}
-            onChange={(event) => setCode(event.target.value)}
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
             required
-            placeholder="验证码"
+            type="password"
+            autoComplete="current-password"
+            placeholder="密码"
             className="h-11 w-full rounded-[13px] border border-white/20 bg-white/10 px-4 text-[11px] text-white outline-none placeholder:text-white/40"
           />
           <button disabled={loading} className="login-primary w-full disabled:opacity-60">
-            {loading ? "正在登录…" : "手机号登录"}
+            {loading ? "正在登录…" : "登录"}
           </button>
         </form>
         <p className="mb-0 mt-3 text-center text-[8px] text-white/35">
