@@ -1,6 +1,6 @@
 import type { Platform } from "@/lib/api";
 
-export const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.0";
+export const APP_VERSION = import.meta.env.VITE_APP_VERSION || "1.0.1";
 
 export function getAppPlatform(): Platform {
   const runtime = (globalThis as typeof globalThis & { plus?: { os?: { name?: string } } }).plus?.os
