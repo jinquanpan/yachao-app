@@ -12,6 +12,7 @@ import { Suspense, useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { RouteSkeleton } from "../components/page-skeleton";
+import { AppNoticeViewport } from "../components/app-notice";
 
 function NotFoundComponent() {
   return (
@@ -143,6 +144,7 @@ function RootComponent() {
       <Suspense fallback={<RouteSkeleton />}>
         <Outlet />
       </Suspense>
+      <AppNoticeViewport />
     </QueryClientProvider>
   );
 }

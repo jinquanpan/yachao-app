@@ -5,13 +5,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { PhoneShell, TopBar } from "@/components/phone-shell";
 import { ApiFailure } from "@/components/api-state";
 import { SkeletonList } from "@/components/page-skeleton";
-import { apiRequest, errorMessage, jsonBody, type Address as AddressType } from "@/lib/api";
+import { apiRequest, jsonBody, type Address as AddressType } from "@/lib/api";
+import { notify } from "@/lib/notify";
 
 export const Route = createFileRoute("/address")({ component: Address });
 function Address() {
   const client = useQueryClient();
   const [adding, setAdding] = useState(false);
-  const [error, setError] = useState("");
   const query = useQuery({
     queryKey: ["addresses"],
     queryFn: () => apiRequest<AddressType[]>("/addresses"),
@@ -23,6 +23,7 @@ function Address() {
   const makeDefault = useMutation({
     mutationFn: (id: string) => apiRequest(`/addresses/${id}/default`, { method: "PUT" }),
     onSuccess: refresh,
+    onError: notify.apiError,
   });
   const create = useMutation({
     mutationFn: (body: Record<string, unknown>) =>
@@ -30,13 +31,14 @@ function Address() {
     onSuccess: () => {
       refresh();
       setAdding(false);
+      notify.success("地址已保存");
     },
+    onError: notify.apiError,
   });
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setError("");
     const data = Object.fromEntries(new FormData(event.currentTarget));
-    create.mutate(data, { onError: (reason) => setError(errorMessage(reason)) });
+    create.mutate(data);
   };
   return (
     <PhoneShell showNav={false}>
@@ -123,7 +125,6 @@ function Address() {
                 className="h-10 w-full rounded-xl border border-slate-200 px-3 text-[11px] outline-none"
               />
             ))}
-            {error && <p className="text-[10px] text-red-500">{error}</p>}
             <button disabled={create.isPending} className="primary-button w-full">
               保存地址
             </button>

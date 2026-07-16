@@ -1,18 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  CheckCircle2,
-  CircleDollarSign,
-  ImagePlus,
-  PackagePlus,
-  ScanLine,
-  Tags,
-} from "lucide-react";
+import { CircleDollarSign, ImagePlus, PackagePlus, ScanLine, Tags } from "lucide-react";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { PhoneShell, TopBar } from "@/components/phone-shell";
 import { ApiFailure } from "@/components/api-state";
 import { PageSkeleton } from "@/components/page-skeleton";
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest, errorMessage, jsonBody, type Category } from "@/lib/api";
+import { apiRequest, jsonBody, type Category } from "@/lib/api";
+import { notify } from "@/lib/notify";
 
 export const Route = createFileRoute("/scan-entry")({ component: ScanEntry });
 
@@ -24,7 +18,6 @@ function ScanEntry() {
   const [image, setImage] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [saved, setSaved] = useState(false);
-  const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const categories = useQuery({
     queryKey: ["categories"],
@@ -58,7 +51,7 @@ function ScanEntry() {
     if (!file) return;
     if (file.size > 5 * 1024 * 1024) {
       event.target.value = "";
-      window.alert("图片不能超过 5MB");
+      notify.warning("图片不能超过 5MB");
       return;
     }
     setImageFile(file);
@@ -71,11 +64,10 @@ function ScanEntry() {
     event.preventDefault();
     if (saved) return;
     if (!imageFile) {
-      window.alert("请选择商品图片");
+      notify.warning("请选择商品图片");
       return;
     }
     setSubmitting(true);
-    setError("");
     try {
       const form = new FormData();
       form.append("image", imageFile);
@@ -94,9 +86,10 @@ function ScanEntry() {
         }),
       });
       setSaved(true);
+      notify.success("录入成功，正在返回");
       timerRef.current = window.setTimeout(() => history.back(), 1100);
     } catch (reason) {
-      setError(errorMessage(reason));
+      notify.apiError(reason);
     } finally {
       setSubmitting(false);
     }
@@ -205,7 +198,6 @@ function ScanEntry() {
           </label>
         </section>
 
-        {error && <p className="text-center text-[10px] text-red-500">{error}</p>}
         <button
           type="submit"
           disabled={submitting}
@@ -214,12 +206,6 @@ function ScanEntry() {
           {submitting ? "正在提交…" : "确认录入"}
         </button>
       </form>
-      {saved && (
-        <div className="success-toast">
-          <CheckCircle2 size={22} className="text-cyan-300" />
-          录入成功，正在返回
-        </div>
-      )}
     </PhoneShell>
   );
 }

@@ -1,17 +1,17 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
-import { Bell, Check, ChevronRight, Database, Info, LogOut, ShieldCheck } from "lucide-react";
+import { Bell, ChevronRight, Database, Info, LogOut, ShieldCheck } from "lucide-react";
 import { PhoneShell, TopBar } from "@/components/phone-shell";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, clearSession } from "@/lib/api";
 import { clearUniCache, formatBytes, getUniCacheSize } from "@/utils/uniapp";
+import { notify } from "@/lib/notify";
 
 export const Route = createFileRoute("/settings")({ component: SettingsPage });
 
 function SettingsPage() {
   const [notice, setNotice] = useState(true);
   const [cacheSize, setCacheSize] = useState("—");
-  const [toast, setToast] = useState("");
   const [confirmExit, setConfirmExit] = useState(false);
   const nav = useNavigate();
   const client = useQueryClient();
@@ -25,17 +25,13 @@ function SettingsPage() {
       .then((size) => setCacheSize(formatBytes(size)))
       .catch(() => setCacheSize("不可用"));
   }, []);
-  const showToast = (message: string) => {
-    setToast(message);
-    window.setTimeout(() => setToast(""), 1600);
-  };
   const clearCache = async () => {
     try {
       await clearUniCache();
       setCacheSize("0 B");
-      showToast("缓存已清除");
+      notify.success("缓存已清除");
     } catch {
-      showToast("当前环境无法清除缓存");
+      notify.warning("当前环境无法清除缓存");
     }
   };
   const logout = async () => {
@@ -118,12 +114,6 @@ function SettingsPage() {
           Build 2026.06.29
         </p>
       </div>
-      {toast && (
-        <div className="absolute left-1/2 top-20 z-50 flex -translate-x-1/2 items-center gap-2 whitespace-nowrap rounded-full bg-slate-950 px-4 py-2 text-[10px] text-white shadow-xl rise">
-          <Check size={13} className="text-cyan-300" />
-          {toast}
-        </div>
-      )}
       {confirmExit && (
         <div className="absolute inset-0 z-50 grid place-items-center bg-slate-950/45 px-8 backdrop-blur-[2px]">
           <div className="w-full rounded-[20px] bg-white p-5 text-center shadow-2xl rise">
